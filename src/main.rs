@@ -28,7 +28,7 @@ fn repeat_tests_with_set_switch_threaded(
     let (thread_sender, thread_receiver) = mpsc::channel();
 
     for thread_id in 0..N_THREADS {
-        let number_of_tests_for_thread: u64 = if thread_id == 0 {
+        let number_of_tests_for_the_thread: u64 = if thread_id == 0 {
             number_of_tests / N_THREADS + number_of_tests % N_THREADS
         } else {
             number_of_tests / N_THREADS
@@ -37,7 +37,7 @@ fn repeat_tests_with_set_switch_threaded(
         let local_thread_sender = thread_sender.clone();
         thread::spawn(move || {
             let n_successes: u64 = repeat_tests_with_set_switch(
-                number_of_tests_for_thread,
+                number_of_tests_for_the_thread,
                 b_does_viewer_switches_the_door,
             );
             local_thread_sender.send(n_successes)
