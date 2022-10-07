@@ -1,5 +1,19 @@
 use std::sync::mpsc;
 use std::thread;
+use clap::Parser;
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+   /// Number of tries to test each decision 
+   #[arg(short, long, default_value_t = 1_000_000_000)]
+   number_of_tests: u64,
+
+   /// Number of threads to use for tests
+   #[arg(short, long, default_value_t = 8)]
+   threads: u16,
+}
+
 
 fn choose_door(b_does_viewer_switches_the_door: bool) -> bool {
     let correct_door: u8 = rand::random::<u8>() % 3;
@@ -20,18 +34,18 @@ fn repeat_tests_with_set_switch(
     n_successes
 }
 
-static N_THREADS: u64 = 8;
 fn repeat_tests_with_set_switch_threaded(
     number_of_tests: u64,
     b_does_viewer_switches_the_door: bool,
+    n_threads:u64
 ) -> u64 {
     let (thread_sender, thread_receiver) = mpsc::channel();
 
-    for thread_id in 0..N_THREADS {
+    for thread_id in 0..n_threads {
         let number_of_tests_for_the_thread: u64 = if thread_id == 0 {
-            number_of_tests / N_THREADS + number_of_tests % N_THREADS
+            number_of_tests / n_threads + number_of_tests % n_threads
         } else {
-            number_of_tests / N_THREADS
+            number_of_tests / n_threads
         };
 
         let local_thread_sender = thread_sender.clone();
@@ -48,10 +62,12 @@ fn repeat_tests_with_set_switch_threaded(
     thread_receiver.iter().sum()
 }
 
+
 fn main() {
-    let number_of_tests = 1_000_000_000;
-    let result_for_yes_switch = repeat_tests_with_set_switch_threaded(number_of_tests, true);
-    println!("With switch, \t{result_for_yes_switch}/{number_of_tests}");
-    let result_for_not_switch = repeat_tests_with_set_switch_threaded(number_of_tests, false);
-    println!("Without switch \t{result_for_not_switch}/{number_of_tests}!");
+    let args = Args::parse();
+
+    let result_for_yes_switch = repeat_tests_with_set_switch_threaded(args.number_of_tests, true, args.threads as u64);
+    println!("With switch, \t{result_for_yes_switch}/{}", args.number_of_tests);
+    let result_for_not_switch = repeat_tests_with_set_switch_threaded(args.number_of_tests, false, args.threads as u64);
+    println!("Without switch \t{result_for_not_switch}/{}", args.number_of_tests);
 }
