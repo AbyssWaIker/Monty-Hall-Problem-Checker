@@ -1,11 +1,9 @@
-use rand::Rng;
 use std::sync::mpsc;
 use std::thread;
 
 fn choose_door(b_does_viewer_switches_the_door: bool) -> bool {
-    let mut rng = rand::thread_rng();
-    let correct_door: u8 = rng.gen::<u8>() % 3;
-    let chosen_door: u8 = rng.gen::<u8>() % 3;
+    let correct_door: u8 = rand::random::<u8>() % 3;
+    let chosen_door: u8 = rand::random::<u8>() % 3;
 
     let b_had_viewer_chosen_correctly = chosen_door == correct_door;
     let b_had_viewer_won = b_had_viewer_chosen_correctly != b_does_viewer_switches_the_door;
@@ -29,8 +27,8 @@ fn repeat_tests_with_set_switch_threaded(
 ) -> u64 {
     let (thread_sender, thread_receiver) = mpsc::channel();
 
-    for thread_i in 0..N_THREADS {
-        let number_of_tries_for_thread: u64 = if thread_i == 0 {
+    for thread_id in 0..N_THREADS {
+        let number_of_tests_for_thread: u64 = if thread_id == 0 {
             number_of_tests / N_THREADS + number_of_tests % N_THREADS
         } else {
             number_of_tests / N_THREADS
@@ -39,7 +37,7 @@ fn repeat_tests_with_set_switch_threaded(
         let local_thread_sender = thread_sender.clone();
         thread::spawn(move || {
             let n_successes: u64 = repeat_tests_with_set_switch(
-                number_of_tries_for_thread,
+                number_of_tests_for_thread,
                 b_does_viewer_switches_the_door,
             );
             local_thread_sender.send(n_successes)
@@ -51,7 +49,7 @@ fn repeat_tests_with_set_switch_threaded(
 }
 
 fn main() {
-    let number_of_tests = 10_000_000;
+    let number_of_tests = 1_000_000_000;
     let result_for_yes_switch = repeat_tests_with_set_switch_threaded(number_of_tests, true);
     println!("With switch, \t{result_for_yes_switch}/{number_of_tests}");
     let result_for_not_switch = repeat_tests_with_set_switch_threaded(number_of_tests, false);
